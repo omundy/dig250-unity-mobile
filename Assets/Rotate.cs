@@ -1,58 +1,52 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
+/// <summary>
+/// Rotate a cube in space with 1) sensor input or 2) keys/touch
+/// </summary>
 public class Rotate : MonoBehaviour
 {
-    UnityEngine.InputSystem.Gyroscope gyroscope;
-    public Vector3 gyroData = Vector3.zero;
+    public bool useSensor = true;
+    public bool gyroEnabled;
+    public Vector3 gyro = Vector3.zero;
 
-    public float speed = 100f;
     public Vector3 direction = Vector3.zero;
-    public int timer;
+    public float speed = 100f;
+    public float timer;
 
 
-    private void Start()
-    {
-        gyroscope = UnityEngine.InputSystem.Gyroscope.current;
-    }
 
     void Update()
     {
-        // enable gyroscope
-        if (gyroscope != null && !gyroscope.enabled)
+        if (useSensor)
         {
-            InputSystem.EnableDevice(gyroscope);
-            Debug.Log("Gyroscope enabled");
+            gyroEnabled = Input.gyro.enabled;
+
+            if (!Input.gyro.enabled)
+                Input.gyro.enabled = true;
+
+            gyro = Input.gyro.rotationRateUnbiased;
+            direction += gyro;
+            transform.rotation = Quaternion.Euler(direction.x, direction.y, direction.z);
         }
-        gyroData = gyroscope.angularVelocity.ReadValue();
+        else
+            UseTouchInput();
+    }
 
 
-        if (Input.GetKey("up") || Input.GetKey("down") || Input.GetKey("left") || Input.GetKey("right"))
-            Touch();
+    void UseTouchInput()
+    {
+        if (--timer < 0)
+            if (Input.anyKey || Input.touches.Length > 0)
+            {
+                timer = 100;
+                direction = new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1));
+                speed = Random.Range(15, 200);
+            }
 
-        if (timer < 0) timer = 1000;
-
-        //if (timer > 50)
-        direction -= new Vector3(.001f, .001f, .001f);
-
+        direction -= new Vector3(.01f, .01f, .01f);
         transform.RotateAround(transform.position, direction, speed * Time.deltaTime);
     }
-
-    void Touch()
-    {
-        if (timer > 0)
-            direction = new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1));
-        speed = Random.Range(5, 200);
-    }
-
-
-    Vector3 GetGyro()
-    {
-        Vector3 val = Vector3.zero;
-        return val;
-    }
-
 
 }
